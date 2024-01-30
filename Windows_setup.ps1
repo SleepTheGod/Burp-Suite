@@ -15,17 +15,24 @@ echo "Setting Wget Progress to Silent, Becuase it slows down Downloading by +50x
 $ProgressPreference = 'SilentlyContinue'
 
 # Check JDK-18 Availability or Download JDK-19
-$jdk18 = Get-WmiObject -Class Win32_Product -filter "Vendor='Oracle Corporation'" |where Caption -clike "Java(TM) SE Development Kit 19*"
-if (!($jdk18)){
-    echo "`t`tDownnloading Java JDK-19 ...."
-    wget "https://download.oracle.com/java/19/latest/jdk-19_windows-x64_bin.exe" -O jdk-19.exe    
-    echo "`n`t`tJDK-19 Downloaded, lets start the Installation process"
-    start -wait jdk-19.exe
-    rm jdk-19.exe
-}else{
-    echo "Required JDK-19 is Installed"
-    $jdk18
+$jre8 = Get-CimInstance -ClassName Win32_Product | Where-Object { $_.Vendor -eq 'Oracle Corporation' -and $_.Caption -like 'Java 8 Update *' }
+
+if (!$jre8) {
+    echo "`n`t`tDownloading Java JRE ...."
+    $downloadUrl = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=246474_2dee051a5d0647d5be72a7c0abff270e"
+    $outputFile = "jre-8.exe"
+
+    Invoke-WebRequest -Uri $downloadUrl -OutFile $outputFile
+
+    echo "`n`t`tJRE-8 Downloaded, let's start the installation process"
+    Start-Process -FilePath $outputFile -Wait -ArgumentList "/s"
+
+    Remove-Item $outputFile
+} else {
+    echo "`n`nRequired JRE-8 is Installed`n"
+    $jre8
 }
+
 
 # Check JRE-8 Availability or Download JRE-8
 $jre8 = Get-WmiObject -Class Win32_Product -filter "Vendor='Oracle Corporation'" |where Caption -clike "Java 8 Update *"
